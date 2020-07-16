@@ -60,9 +60,6 @@ import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.contrib.slim.nets import resnet_v1
 
-#
-from .resnet_v1_divide import resnet_v1_50_slgView, resnet_v1_50_mulView
-
 def encoder_resnet50(images, num_classes, is_training=True, reuse=None):
 
     """Predict prediction tensors from inputs tensor.
@@ -84,74 +81,3 @@ def encoder_resnet50(images, num_classes, is_training=True, reuse=None):
         reuse = reuse)
     net = tf.squeeze(net, axis=[1, 2])
     return net, endpoints
-
-def encoder_resnet50_slgView(images, is_training=True, reuse=None):
-
-    """Predict prediction tensors from inputs tensor.
-
-    Outputs of this function can be passed to loss or postprocess functions.
-
-    Args:
-        preprocessed_inputs: A float32 tensor with shape [batch_size,
-            height, width, num_channels] representing a batch of images.
-
-    Returns:
-        prediction_dict: A dictionary holding prediction tensors to be
-            passed to the Loss or Postprocess functions.
-    """
-    net, endpoints = resnet_v1_50_slgView(
-        images,
-        is_training=is_training,
-        reuse = reuse)
-    net = tf.squeeze(net, axis=[1, 2])
-    return net, endpoints
-
-def encoder_resnet50_mulView(feature_fused, num_classes, is_training=True, reuse=None):
-
-    """Predict prediction tensors from inputs tensor.
-
-    Outputs of this function can be passed to loss or postprocess functions.
-
-    Args:
-        preprocessed_inputs: A float32 tensor with shape [batch_size,
-            height, width, num_channels] representing a batch of images.
-
-    Returns:
-        prediction_dict: A dictionary holding prediction tensors to be
-            passed to the Loss or Postprocess functions.
-    """
-    net, endpoints = resnet_v1_50_mulView(
-        feature_fused,
-        num_classes=num_classes,
-        is_training=is_training,
-        reuse = reuse)
-    net = tf.squeeze(net, axis=[1, 2])
-    return net, endpoints
-
-def decoder_head(feature_fused, num_displMap, is_training=True, reuse=None):
-
-    deconv = tf.layers.conv2d_transpose(feature_fused, filters=256, kernel_size=4, strides=2, padding='same', trainable=is_training, reuse=reuse, name='deconv1')
-    deconv = tf.layers.batch_normalization(deconv, trainable=is_training, reuse=reuse, name='bn1')
-    deconv = tf.nn.relu(deconv)
-
-    deconv = tf.layers.conv2d_transpose(deconv, filters=256, kernel_size=4, strides=4, padding='same', trainable=is_training, reuse=reuse, name='deconv2')
-    deconv = tf.layers.batch_normalization(deconv, trainable=is_training, reuse=reuse, name='bn2')
-    deconv = tf.nn.relu(deconv)
-
-    deconv = tf.layers.conv2d_transpose(deconv, filters=256, kernel_size=4, strides=4, padding='same', trainable=is_training, reuse=reuse, name='deconv3')
-    deconv = tf.layers.batch_normalization(deconv, trainable=is_training, reuse=reuse, name='bn3')
-    deconv = tf.nn.relu(deconv)
-
-    # deconv = tf.layers.conv2d_transpose(deconv, filters=256, kernel_size=4, strides=2, padding='same', trainable=is_training, reuse=reuse, name='deconv4')
-    # deconv = tf.layers.batch_normalization(deconv, trainable=is_training, reuse=reuse, name='bn4')
-    # deconv = tf.nn.relu(deconv)
-    #
-    # deconv = tf.layers.conv2d_transpose(deconv, filters=256, kernel_size=4, strides=2, padding='same', trainable=is_training, reuse=reuse, name='deconv5')
-    # deconv = tf.layers.batch_normalization(deconv, trainable=is_training, reuse=reuse, name='bn5')
-    # deconv = tf.nn.relu(deconv)
-
-    conv = tf.layers.conv2d(deconv, filters=num_displMap, kernel_size=1, strides=1, padding='same', trainable=is_training, reuse=reuse, name='conv1')
-    conv = tf.layers.batch_normalization(conv, trainable=is_training, reuse=reuse, name='bn6')
-    conv = tf.nn.relu(conv)
-
-    return conv

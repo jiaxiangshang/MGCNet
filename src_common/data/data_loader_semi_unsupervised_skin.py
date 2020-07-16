@@ -4,10 +4,7 @@ import random
 import tensorflow as tf
 import numpy as np
 
-from src_common.common.io_helper import unpack_image_sequence
-
-from public import data_augmentation_mul, make_intrinsics_matrix
-
+from src_common.common.tf_io import unpack_image_sequence, data_augmentation_mul
 
 class DataLoader(object):
     def __init__(self, 
@@ -15,8 +12,7 @@ class DataLoader(object):
                  batch_size=None,
                  img_height=None, 
                  img_width=None, 
-                 num_source=None, 
-                 num_scales=None,
+                 num_source=None,
                  aug_crop_size=None,
                  read_pose=False,
                  match_num=0,
@@ -28,14 +24,13 @@ class DataLoader(object):
         self.img_height = img_height
         self.img_width = img_width
         self.num_source = num_source
-        self.num_scales = num_scales
         self.aug_crop_size = aug_crop_size
         self.read_pose = read_pose
         self.match_num = match_num
         self.flag_data_aug = flag_data_aug
         self.flag_shuffle = flag_shuffle
 
-    def format_file_list(self, data_root, split, single_part=1, mul_part=1, flag_smooth_semi=False):
+    def format_file_list(self, data_root, split):
         all_list = {}
         with open(data_root + '/%s.txt' % split, 'r') as f:
             frames = f.readlines()
@@ -52,43 +47,12 @@ class DataLoader(object):
 
         steps_per_epoch = int(len(image_file_list) // self.batch_size)
         print("*************************************************************** format_file_list ")
-        if flag_smooth_semi:
-            # shuffle
-            img_cam = list(zip(image_file_list, cam_file_list, skin_file_list, flag_slg_mul))
-            img_cam_single = []
-            img_cam_mul = []
-
-            for i in range(len(img_cam)):
-                sample = img_cam[i]
-                if sample[3] == '0':
-                    img_cam_single.append(sample)
-                else:
-                    img_cam_mul.append(sample)
-            random.shuffle(img_cam_single)
-            random.shuffle(img_cam_mul)
-            img_cam_single = img_cam_single + img_cam_single
-            img_cam_mul = img_cam_mul + img_cam_mul  # TODO: Dirty
-
-            print("Finish shuffle all epoch %d single %d and mul %d" % (steps_per_epoch, len(img_cam_single) / 2, len(img_cam_mul) / 2))
-
-            # combine
-            img_cam_all = []
-            for i in range(steps_per_epoch):
-                mul_part = random.choice([1, 2])
-                single_part = self.batch_size - mul_part
-                img_cam_all = img_cam_all + img_cam_mul[i * mul_part: (i + 1) * mul_part]
-                img_cam_all = img_cam_all + img_cam_single[i * single_part: (i + 1) * single_part]
-
-            print("Finish combine all %d" % (len(img_cam_all)))
-            # unzip
-            image_file_list, cam_file_list, skin_file_list, flag_slg_mul = zip(*img_cam_all)
+        img_cam = list(zip(image_file_list, cam_file_list, skin_file_list, flag_slg_mul))
+        if self.flag_shuffle:
+            random.shuffle(img_cam)
         else:
-            img_cam = list(zip(image_file_list, cam_file_list, skin_file_list, flag_slg_mul))
-            if self.flag_shuffle:
-                random.shuffle(img_cam)
-            else:
-                print("Without shuffle")
-            image_file_list, cam_file_list, skin_file_list, flag_slg_mul = zip(*img_cam)
+            print("Without shuffle")
+        image_file_list, cam_file_list, skin_file_list, flag_slg_mul = zip(*img_cam)
 
         all_list['image_file_list'] = image_file_list
         all_list['cam_file_list'] = cam_file_list
@@ -133,7 +97,6 @@ class DataLoader(object):
 
             image = image_all[:, :, :, :3*(self.num_source+1)]
             image_skin = image_all[:, :, :, 3*(self.num_source+1):]
-            #intrinsics = self.get_multi_scale_intrinsics(intrinsics, self.num_scales)
             return image, image_skin, flag_sgl_mul, intrinsics, optional_data1, matches
 
         input_image_names_ph = tf.placeholder(tf.string, shape=[None], name='input_image_names_ph')
@@ -274,19 +237,6 @@ class DataLoader(object):
                                     [-1, -1, img_width, -1]) 
                                     for i in range(num_source)], axis=3)
         return tgt_image, src_image_stack
-
-    def get_multi_scale_intrinsics(self, intrinsics, num_scales):
-        intrinsics_mscale = []
-        # Scale the intrinsics accordingly for each scale
-        for s in range(num_scales):
-            fx = intrinsics[:,0,0]/(2 ** s)
-            fy = intrinsics[:,1,1]/(2 ** s)
-            cx = intrinsics[:,0,2]/(2 ** s)
-            cy = intrinsics[:,1,2]/(2 ** s)
-            intrinsics_mscale.append(
-                make_intrinsics_matrix(fx, fy, cx, cy))
-        intrinsics_mscale = tf.stack(intrinsics_mscale, axis=1)
-        return intrinsics_mscale
 
 if __name__ == "__main__":
     path_data = "/home/jshang/SHANG_Data_MOUNT/141/GAFR_semi_bfmAlign_3/11141_300WLP_CelebA_Mpie_tensor_MERGE"

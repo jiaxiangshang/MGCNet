@@ -1,0 +1,23 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+
+# python
+*.pyc
+
+# IDE
+*/.idea/*
+.idea/*
+
+# Code
+src_common/eval/
+
+# exp
+pretrain/
+script/
+server/
+local_face_debug.txt
+thirdParty/
+
+# 
+*.zip
+
+

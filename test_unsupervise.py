@@ -4,16 +4,17 @@ import os
 import sys
 from shutil import copyfile
 
-import PIL.Image as pil
-import cv2
-import matplotlib.pyplot as plt
-#
+# tf
 import numpy as np
-#
 import tensorflow as tf
+
+# save result
+import cv2
+import PIL.Image as pil
+import matplotlib.pyplot as plt
 import trimesh
 
-# self
+# path
 _curr_path = os.path.abspath(__file__) # /home/..../face
 _cur_dir = os.path.dirname(_curr_path) # ./
 _tf_dir = os.path.dirname(_cur_dir) # ./
@@ -21,11 +22,11 @@ _deep_learning_dir = os.path.dirname(_tf_dir) # ../
 print(_deep_learning_dir)
 sys.path.append(_deep_learning_dir) # /home/..../pytorch3d
 
-#
-#
-from src_common.common.faceIO import write_self_camera, write_self_lm, write_NoW_lm
-#
-from src_tfGraph.graph_train import MGC_TRAIN
+# save result
+from src_common.common.face_io import write_self_camera, write_self_lm, write_NoW_lm
+
+# graph
+from src_tfGraph.build_graph import MGC_TRAIN
 
 flags = tf.app.flags
 #

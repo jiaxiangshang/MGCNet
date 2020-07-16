@@ -7,56 +7,19 @@ import numpy as np
 # tf_render
 import tensorflow as tf
 
+from src_common.net.resnet_v1_3dmm import encoder_resnet50
+
+from src_common.net.inception_resnet_v1 import identity_inference
 from src_common.geometry.align_facenet import facenet_align
-#
+
 from src_common.geometry.camera_distribute.camera_utils import project3d_batch
-# tianwei
-#
 from src_common.geometry.lighting import vertex_normals_pre_split_fixtopo
 from src_common.geometry.render.api_tf_mesh_render import mesh_depthmap_camera, mesh_renderer_camera, mesh_renderer_camera_light, \
     tone_mapper
-from src_common.net.inception_resnet_v1 import identity_inference
-from src_common.net.resnet_v1_3dmm import encoder_resnet50, encoder_resnet50_slgView, encoder_resnet50_mulView, decoder_head
 
 
-# self
-# jiaxiang
 
-# id
-def pred_encoder_id(opt, gpmm_render_tar_align):
-    list_gpmm_id_pred_tar = []
-    for i in range(len(gpmm_render_tar_align)):
-        gpmm_render_de = gpmm_render_tar_align[i] * 255.0
-
-        if opt.mode_depth_pixel_loss == 'clip':
-            gpmm_render_de = tf.clip_by_value(gpmm_render_de, 0.0, 255.0)
-
-        gpmm_render_de = facenet_image_process(gpmm_render_de)
-
-        gpmm_id_pred_tar = pred_encoder_facenet(gpmm_render_de)
-
-        #gpmm_id_pred_tar = tf.Print(gpmm_id_pred_tar, [tf.reduce_mean(gpmm_render_de), tf.reduce_mean(gpmm_id_pred_tar)], message='gpmm_id_pred')
-
-        list_gpmm_id_pred_tar.append(gpmm_id_pred_tar[0])
-
-    return list_gpmm_id_pred_tar
-
-def pred_encoder_facenet(image):
-    with tf.name_scope("3dmm_identity"):
-        #
-        list_gpmm_id = []
-
-        prelogits, end_points = identity_inference(
-            image, 0.8, phase_train=False,
-            bottleneck_layer_size=512, weight_decay=0.0, reuse=tf.AUTO_REUSE
-        )
-        # list_gpmm_id.append(prelogits)
-        embeddings = tf.nn.l2_normalize(prelogits, 1, 1e-10, name='embeddings')
-
-        list_gpmm_id.append(embeddings)
-
-        return list_gpmm_id
-
+# net
 def pred_encoder_coeff(opt, defined_pose_main, list_image, is_training=True):
     pred_rank = 2 * opt.gpmm_rank + opt.gpmm_exp_rank + 6 + 27
 
@@ -100,35 +63,55 @@ def pred_encoder_coeff_light(opt, defined_pose_main, list_image, is_training=Tru
             list_gpmm.append(pred_id_src)
         return list_gpmm
 
-# feature fusion
-def pred_encoder_slgViewFeature(list_image, is_training=True):
-    with tf.name_scope("3dmm_coeff"):
+# id
+def pred_encoder_id(opt, gpmm_render_tar_align):
+    list_gpmm_id_pred_tar = []
+    for i in range(len(gpmm_render_tar_align)):
+        gpmm_render_de = gpmm_render_tar_align[i] * 255.0
+
+        # if opt.mode_depth_pixel_loss == 'clip':
+        #     gpmm_render_de = tf.clip_by_value(gpmm_render_de, 0.0, 255.0)
+
+        gpmm_render_de = facenet_image_process(gpmm_render_de)
+
+        gpmm_id_pred_tar = pred_encoder_facenet(gpmm_render_de)
+
+        #gpmm_id_pred_tar = tf.Print(gpmm_id_pred_tar, [tf.reduce_mean(gpmm_render_de), tf.reduce_mean(gpmm_id_pred_tar)], message='gpmm_id_pred')
+
+        list_gpmm_id_pred_tar.append(gpmm_id_pred_tar[0])
+
+    return list_gpmm_id_pred_tar
+
+def pred_encoder_facenet(image):
+    with tf.name_scope("3dmm_identity"):
         #
-        list_gpmm = []
-        for i in range(len(list_image)):
+        list_gpmm_id = []
 
-            #pred_id_src, end_points_src = encoder_resnet50_slgView(list_image[i], pred_rank, is_training=is_training, reuse=tf.AUTO_REUSE)
-            pred_id_src, dict_feature_map = encoder_resnet50_slgView(list_image[i], is_training=is_training, reuse=tf.AUTO_REUSE)
-            feature_map = dict_feature_map['resnet_v1_50/block1']
-            list_gpmm.append(feature_map)
+        prelogits, end_points = identity_inference(
+            image, 0.8, phase_train=False,
+            bottleneck_layer_size=512, weight_decay=0.0, reuse=tf.AUTO_REUSE
+        )
+        # list_gpmm_id.append(prelogits)
+        embeddings = tf.nn.l2_normalize(prelogits, 1, 1e-10, name='embeddings')
 
-        return list_gpmm
+        list_gpmm_id.append(embeddings)
 
-def pred_encoder_fusionCoeffALL(opt, defined_pose_main, list_feature, is_training=True):
-    pred_rank = 2 * opt.gpmm_rank + opt.gpmm_exp_rank + 6 + 27
+        return list_gpmm_id
 
-    with tf.name_scope("3dmm_coeff"):
-        #
-        list_coeffAll = []
-        list_gpmm_features = []
+def decoder_similar(opt, defined_lm_facenet_align, render_img, list_img, lm2d, list_lm2d_gt):
+    """
+    Render image align, id
+    """
+    gpmm_render_align = facenet_align(render_img, lm2d, defined_lm_facenet_align, opt.img_height, opt.img_width)
+    gpmm_render_tar_id = pred_encoder_id(opt, gpmm_render_align)
 
-        for i in range(len(list_feature)):
-            pred_id_src, end_points_src = encoder_resnet50_mulView(list_feature[i], pred_rank, is_training=is_training, reuse=tf.AUTO_REUSE)
-            list_coeffAll.append(pred_id_src)
-            list_gpmm_features.append(end_points_src)
+    """
+    Ori image align, id
+    """
+    image_align = facenet_align(list_img, list_lm2d_gt, defined_lm_facenet_align, opt.img_height, opt.img_width)
+    tgt_image_id = pred_encoder_id(opt, image_align)
 
-    return list_coeffAll, list_gpmm_features
-
+    return gpmm_render_tar_id, tgt_image_id, gpmm_render_align, image_align
 
 # decode mesh
 def decoder_colorMesh(h_lrgp, list_gpmm, list_gpmm_color, list_gpmm_exp, list_gpmm_lighting, flag_sgl_mul=None):
@@ -336,35 +319,6 @@ def decoder_renderColorMesh_gary(opt, h_lrgp, list_vertex, list_vertex_normal, l
         gpmm_render_tri_ids.append(pred_render_tri_ids)
     return gpmm_render, gpmm_render_mask, gpmm_render_tri_ids
 
-def decoder_similar(opt, defined_lm_facenet_align, render_img, list_img, lm2d, list_lm2d_gt):
-    """
-    Render image align, id
-    """
-    gpmm_render_align = facenet_align(render_img, lm2d, defined_lm_facenet_align, opt.img_height, opt.img_width)
-    gpmm_render_tar_id = pred_encoder_id(opt, gpmm_render_align)
-
-    """
-    Ori image align, id
-    """
-    image_align = facenet_align(list_img, list_lm2d_gt, defined_lm_facenet_align, opt.img_height, opt.img_width)
-    tgt_image_id = pred_encoder_id(opt, image_align)
-
-    return gpmm_render_tar_id, tgt_image_id, gpmm_render_align, image_align
-
-
-# multi-view consistency
-# def decoder_warppose(pred_pose_render_list, pred_pose_render_src_list):
-#     pred_pose_render = pred_pose_render_list[0]
-#     rel_pose_list = []
-#     for i in range(len(pred_pose_render_src_list)):
-#         rel_pose_l = get_relative_pose(pred_pose_render, pred_pose_render_src_list[i])
-#         rel_pose_l = mat2pose_vec(rel_pose_l)
-#         #rel_pose_l = tf.Print(rel_pose_l, [rel_pose_l], message='rel_pose_l')
-#
-#         rel_pose_list.append(rel_pose_l)
-#     image_pred_poses = tf.stack(rel_pose_list, axis=1)
-#     return image_pred_poses
-
 def decoder_depth(opt, h_lrgp, list_vertex, mtx_perspect_frustrum, list_mtx_ext, list_mtx_model_view, list_cam_position, fore=1):
     refine_depths = []
     refine_depths_mask = []
@@ -391,9 +345,7 @@ def decoder_depth(opt, h_lrgp, list_vertex, mtx_perspect_frustrum, list_mtx_ext,
             refine_depths_mask.append(mask)
     return refine_depths, refine_depths_mask
 
-"""
-Functional
-"""
+#
 def facenet_image_process(image_batch_float):
     list_img_std = []
     for b in range(image_batch_float.shape[0]):

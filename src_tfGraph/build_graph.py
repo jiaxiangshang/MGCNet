@@ -7,32 +7,26 @@ import os
 import time
 
 from src_common.common.format_helper import *
-# jiaxiang
-#
-from src_common.common.parse_encoder import parse_coeff_list
 from src_common.common.visual_helper import *
 # data
 from src_common.data import find_dataloader_using_name
-from src_common.geometry.align_facenet import get_facenet_align_lm
-# tianwei
-from src_common.geometry.geo_utils import projective_inverse_warp
 # geometry
 from src_common.geometry.gpmm.bfm09_tf_uv import BFM_TF
-
+# common
+from src_common.common.parse_encoder import parse_coeff_list
+from src_common.geometry.camera_distribute.camera_utils import *
+from src_common.geometry.align_facenet import get_facenet_align_lm
+from deep_3dmm_decoder import *
+# multiview
+from src_common.geometry.geo_utils import projective_inverse_warp
+from decoder_multiView import *
 # tf
 from tensorflow.python import debug as tf_debug
 #
 from tensorflow.python import pywrap_tensorflow
 from tensorflow.python.client import timeline
-
-#
-from decoder_multiView import *
-from deep_3dmm_decoder import *
-#
+# loss
 from deep_3dmm_loss import *
-from src_common.geometry.camera_distribute.camera_utils import build_train_graph_3dmm_frustrum, \
-    build_train_graph_3dmm_camera
-
 
 class MGC_TRAIN(object):
     def __init__(self, opt):
@@ -118,22 +112,6 @@ class MGC_TRAIN(object):
             self.list_lm2d_gt_src = [self.matches[:, i, :, :] for i in range(1, self.matches.shape[1])]
             self.list_lm2d_gt = self.list_lm2d_gt_tar + self.list_lm2d_gt_src
 
-            # multi-card support
-            # self.gpu_list = parse_gpu_list(opt.gpu_list)
-            # self.batchsize_gpu = opt.batch_size // len(self.gpu_list)
-            #
-            # list_tar_image_all_gpu = []
-            #
-            # for g_id in range(0, len(self.gpu_list)):
-            #     with tf.device('/gpu:{}'.format(g_id)):
-            #         tf_data = batch_soft_mask[g_id*self.batchsize_gpu:(g_id+1)*self.batchsize_gpu]
-            #         list_tar_image_all_gpu.append(tf_data)
-            #
-            #
-            # self.public_ops['input_mask'] = tf_data_all_gpu
-            # self.public_ops['input_view_label'] = tf_view_label_all_gpu
-            # self.public_ops['input_cluster_label'] = tf_cluster_label_all_gpu
-
         return data_loader, batch_sample
 
 
@@ -184,28 +162,28 @@ class MGC_TRAIN(object):
             self.build_decoderCommon(list_coeffALL, self.list_image, self.list_skin, self.list_lm2d_gt, self.flag_sgl_mul)
         self.dict_inter_comm = dict_intermedate_common
 
-        # loss
+        # ********************************************  Intermediate result for(print, visual, tensorboard)
+        # weighted loss for each view
         self.gpmm_regular_shape_loss = dict_loss_common['reg_shape_loss']
         self.gpmm_regular_color_loss = dict_loss_common['reg_color_loss']
         self.gpmm_lm_loss = dict_loss_common['lm2d_loss']
         self.gpmm_pixel_loss = dict_loss_common['render_loss']
         self.gpmm_id_loss = dict_loss_common['id_loss']
 
-
-        # optim
-        self.gpmm_pose_tar, self.gpmm_pose_src = parse_seq(dict_intermedate_common['pred_6dof_pose'])
-
+        # visual landmark on the rendered images/shade/render loss error map
+        #self.gpmm_pose_tar, self.gpmm_pose_src = parse_seq(dict_intermedate_common['pred_6dof_pose'])
         self.lm2d_tar, self.lm2d_src = parse_seq(dict_intermedate_common['pred_lm2d'])
-
         self.gpmm_render_tar, self.gpmm_render_src = parse_seq(dict_intermedate_common['3dmm_render'])
         self.gpmm_render_mask_tar, self.gpmm_render_mask_src = parse_seq(dict_intermedate_common['3dmm_render_mask'])
         self.gpmm_render_shade_tar, self.gpmm_render_shade_src = parse_seq(dict_intermedate_common['3dmm_render_shade'])
         self.gpmm_render_tri_ids_tar, self.gpmm_render_tri_ids_src = parse_seq(dict_intermedate_common['3dmm_render_tri_id'])
         self.list_render_loss_error_tar, self.list_render_loss_error_src = parse_seq(dict_intermedate_common['3dmm_render_loss_heat'])
-        #self.gpmm_render_tar_main, self.gpmm_render_src_main = parse_seq(dict_intermedate_common['pred_6dof_pose'])
 
+        # visual identity facenet input
         self.gpmm_render_tar_align, self.gpmm_render_src_align = parse_seq(dict_intermedate_common['id_render_align'])
         self.tar_image_align, self.src_image_align = parse_seq(dict_intermedate_common['id_image_align'])
+
+        # visual depthmap
         self.tar_depths, self.lr_depths = parse_seq(dict_intermedate_common['3dmm_depthmap'])
 
         self.gpmm_consist_pixel_tar = self.list_lm2d_gt_tar
@@ -290,12 +268,6 @@ class MGC_TRAIN(object):
         )
         list_gpmm_render = gpmm_face_replace(list_image, list_gpmm_render, list_gpmm_render_mask)
 
-        #
-        # list_render_loss_mask = combine_mask(list_gpmm_render_mask, list_skin)
-        # gpmm_pixel_loss, list_render_loss_error = \
-        #     compute_3dmm_render_eul_masknorm_loss(list_gpmm_render, list_render_loss_mask, list_image)
-
-
         """
         ************************************    Visualization or Testing    *****************************
         """
@@ -331,12 +303,6 @@ class MGC_TRAIN(object):
             dict_intermedate_common['3dmm_render_tri_id'] = list_gpmm_render_tri_ids
             dict_intermedate_common['3dmm_render_loss_heat'] = list_render_loss_error
 
-            # gpmm_pixel_loss = tf.Print(gpmm_pixel_loss,[tf.reduce_mean(list_gpmm_render[0]), tf.reduce_mean(list_gpmm_render_mask[0])],
-            #                                message='gpmm_render_tar')
-            # gpmm_pixel_loss = tf.Print(gpmm_pixel_loss,[tf.reduce_mean(list_gpmm_render[1]), tf.reduce_mean(list_gpmm_render_mask[1])],
-            #                                message='gpmm_render_src0')
-            # gpmm_pixel_loss = tf.Print(gpmm_pixel_loss,[tf.reduce_mean(list_gpmm_render[2]), tf.reduce_mean(list_gpmm_render_mask[2])],
-            #                                message='gpmm_render_src1')
             """
             ************************************    Identity     ********************************************
             """
@@ -570,15 +536,13 @@ class MGC_TRAIN(object):
             train_vars = [var for var in tf.trainable_variables()]
             #print('Optimized variables:', train_vars)
 
-            print("Global variables number: %d" % (len(tf.global_variables())))
+            #print("Global variables number: %d" % (len(tf.global_variables())))
             print("Optimized variables number: %d" % (len(train_vars)))
-
             """
             Clean
             """
-            if opt.net_id == 'facenet':
-                train_vars = [(var) for var in train_vars if var.name.find('InceptionResnetV1') == -1]
-            print("Optimized variables number(After clean forward var): %d" % (len(train_vars)))
+            train_vars = [(var) for var in train_vars if var.name.find('InceptionResnetV1') == -1]
+            #print("Optimized variables number(After clean forward var): %d" % (len(train_vars)))
 
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
@@ -593,54 +557,39 @@ class MGC_TRAIN(object):
                         if grad is None:
                             print("Optimized variables grad is None: ", var)
                     self.grads_and_vars = [(grad, var) for grad, var in self.grads_and_vars if grad is not None]
-                    # grads_and_vars_clip = []
-                    # for grad, var in self.grads_and_vars:
-                    #     grads_and_vars_clip.append((grad, var))
-                    # self.grads_and_vars = grads_and_vars_clip
-
                     sum_grads = [tf.reduce_sum(grad) for grad, var in self.grads_and_vars]
-                    #
-                    # grads_min = [tf.reduce_min(grad) for grad, var in self.grads_and_vars]
-                    # grads_max = [tf.reduce_max(grad) for grad, var in self.grads_and_vars]
-                    # self.grads_and_vars = tf.Print(self.grads_and_vars, [tf.reduce_min(grads_min), tf.reduce_max(grads_max)], message='grad min max')
-
                     self.total_grad = tf.reduce_sum(sum_grads)
-
-                    if opt.train_visual:
-                        pass
-                    else:
-                        self.train_op.append(optim0.apply_gradients(self.grads_and_vars))
-
+                    self.train_op.append(optim0.apply_gradients(self.grads_and_vars))
                 self.incr_global_step = tf.assign(self.global_step, self.global_step + 1)
 
 
     def collect_summaries(self):
         opt = self.opt
+
         # scalar
-        if 1:
-            tf.summary.scalar("total_loss", self.total_loss)
-            tf.summary.scalar("common_loss", self.common_loss)
-            tf.summary.scalar("ga_loss", self.ga_loss)
-            # common
-            if opt.gpmm_regular_shape_loss_weight > 0:
-                tf.summary.scalar("gpmm_regular_shape_loss", self.gpmm_regular_shape_loss)
-            if opt.gpmm_regular_color_loss_weight > 0:
-                tf.summary.scalar("gpmm_regular_color_loss", self.gpmm_regular_color_loss)
-            if opt.gpmm_lm_loss_weight > 0:
-                tf.summary.scalar("gpmm_lm_loss", self.gpmm_lm_loss)
-            if opt.gpmm_pixel_loss_weight > 0:
-                tf.summary.scalar("gpmm_pixel_loss", self.gpmm_pixel_loss)
-            if opt.gpmm_id_loss_weight:
-                tf.summary.scalar("gpmm_id_loss", self.gpmm_id_loss)
-            # multi-view
-            if opt.ssim_weight > 0:
-                tf.summary.scalar("ssim_loss", self.ssim_loss)
-            if opt.photom_weight > 0:
-                tf.summary.scalar("pixel_loss", self.pixel_loss)
-            if opt.epipolar_weight > 0:
-                tf.summary.scalar("epipolar_loss", self.epipolar_loss)
-            if opt.depth_weight > 0:
-                tf.summary.scalar("depth_loss", self.depth_loss)
+        tf.summary.scalar("total_loss", self.total_loss)
+        tf.summary.scalar("common_loss", self.common_loss)
+        tf.summary.scalar("ga_loss", self.ga_loss)
+        # common
+        if opt.gpmm_regular_shape_loss_weight > 0:
+            tf.summary.scalar("gpmm_regular_shape_loss", self.gpmm_regular_shape_loss)
+        if opt.gpmm_regular_color_loss_weight > 0:
+            tf.summary.scalar("gpmm_regular_color_loss", self.gpmm_regular_color_loss)
+        if opt.gpmm_lm_loss_weight > 0:
+            tf.summary.scalar("gpmm_lm_loss", self.gpmm_lm_loss)
+        if opt.gpmm_pixel_loss_weight > 0:
+            tf.summary.scalar("gpmm_pixel_loss", self.gpmm_pixel_loss)
+        if opt.gpmm_id_loss_weight:
+            tf.summary.scalar("gpmm_id_loss", self.gpmm_id_loss)
+        # multi-view
+        if opt.ssim_weight > 0:
+            tf.summary.scalar("ssim_loss", self.ssim_loss)
+        if opt.photom_weight > 0:
+            tf.summary.scalar("pixel_loss", self.pixel_loss)
+        if opt.epipolar_weight > 0:
+            tf.summary.scalar("epipolar_loss", self.epipolar_loss)
+        if opt.depth_weight > 0:
+            tf.summary.scalar("depth_loss", self.depth_loss)
 
         if 1:
 
@@ -710,60 +659,6 @@ class MGC_TRAIN(object):
             self.show_gpmm_render_all = concate_semi_image_series(render_123_tar, render_123_src)
             tf.summary.image('gpmm_render_all', self.show_gpmm_render_all)
 
-        if 0:
-            """
-            identity
-            """
-            list_imageAlign_tar = deprocess_image_series(self.tar_image_align)
-            list_imgAlign_lmDraw_tar = draw_landmark_image(list_imageAlign_tar, [self.defined_lm_facenet_align], opt.img_height, opt.img_width, color=1)
-            list_renderAlign_tar = deprocess_image_series(self.gpmm_render_tar_align)
-            list_renderAlign_lmDraw_tar = draw_landmark_image(list_renderAlign_tar, [self.defined_lm_facenet_align], opt.img_height, opt.img_width, color=1)
-
-
-            list_imageAlign_src = deprocess_image_series(self.src_image_align)
-            list_imgAlign_lmDraw_src = draw_landmark_image(list_imageAlign_src, [self.defined_lm_facenet_align], opt.img_height, opt.img_width, color=1)
-
-            list_renderAlign_src = deprocess_image_series(self.gpmm_render_src_align)
-            list_renderAlign_lmDraw_src = draw_landmark_image(list_renderAlign_src, [self.defined_lm_facenet_align], opt.img_height, opt.img_width, color=1)
-
-
-            # 1
-            show_imgAlign_lmDraw_tar = concate_image_series(list_imgAlign_lmDraw_tar, list_renderAlign_lmDraw_tar, axis=1)
-            show_imgAlign_lmDraw_src = concate_image_series(list_imgAlign_lmDraw_src, list_renderAlign_lmDraw_src, axis=1)
-
-            show_gpmm_render_id_multi = concate_semi_image_series(show_imgAlign_lmDraw_tar, show_imgAlign_lmDraw_src)
-
-            tf.summary.image('gpmm_render_id_multi', show_gpmm_render_id_multi)
-
-        if 0:
-            """
-            depth:
-            """
-            if opt.depth_weight > 0:
-                # 1
-                show_depth_projDepth_tar = concate_image_series(self.tar_depths, self.tar_depths, axis=1)
-                show_depth_projDepth_src = concate_image_series(self.lr_depths, self.geo_proj_depth, axis=1)
-
-                # 2
-                show_d_pD_rpD_tar = concate_image_series(show_depth_projDepth_tar, self.geo_proj_depth_refine_tar, axis=1)
-                show_d_pD_rpD_src = concate_image_series(show_depth_projDepth_src, self.geo_proj_depth_refine_src, axis=1)
-                show_d_pD_rpD_tar = deprocess_gary_image_series(show_d_pD_rpD_tar, convert=False)
-                show_d_pD_rpD_src = deprocess_gary_image_series(show_d_pD_rpD_src, convert=False)
-
-                # 3
-                show_d_pD_rpD_error_tar = self.list_render_image_tar
-                show_d_pD_rpD_error_src = deprocess_image_series(self.geo_proj_depth_error)
-
-                # fusion
-                show_depth_all = concate_semi_image_series(show_d_pD_rpD_tar, show_d_pD_rpD_src)
-                self.show_depth_all = normal_depthmap_for_show(show_depth_all)
-                #
-                show_depth_error = concate_semi_image_series(show_d_pD_rpD_error_tar, show_d_pD_rpD_error_src)
-
-                show_depth_all = tf.concat([self.show_depth_all, show_depth_error], axis=1)
-
-                tf.summary.image("show_depth_all", show_depth_all)
-
             """
             epipolar:
             image + consistance
@@ -811,26 +706,7 @@ class MGC_TRAIN(object):
         1.continue training
         2.pretrain model
         """
-        # model_variables are variables that are defined using slim (recover from previous training sessions)
-        to_restore_vars = tf.global_variables()
-        # check if this var is in the ckpt, if not, don't restore
-        restore_vars = []
-        new_vars = []
-        if opt.init_ckpt_file is not None:
-            ckpt_reader = pywrap_tensorflow.NewCheckpointReader(opt.init_ckpt_file)
-            var2shape_map = ckpt_reader.get_variable_to_shape_map()
-            for res_var in to_restore_vars:
-                var_name = res_var.name.split(':')[0]
-                if var_name in var2shape_map:
-                    restore_vars.append(res_var)
-                else:
-                    new_vars.append(res_var)
-            print('Restored variables:', [var for var in restore_vars])
-            print('New variables:', [var for var in new_vars])
-        else:
-            restore_vars = tf.global_variables()
-            new_vars = tf.global_variables()
-
+        restore_vars = tf.global_variables()
         self.restorer = tf.train.Saver(restore_vars, max_to_keep=None)
         self.saver = tf.train.Saver(tf.global_variables(), max_to_keep=None)
 
@@ -838,35 +714,29 @@ class MGC_TRAIN(object):
         if opt.ckpt_face_pretrain is not None:
             face_variables_to_restore = []
 
-            if opt.net == 'resnet':
-                face_variables_to_restore_all = slim.get_model_variables("resnet_v1_50")
-                for var in face_variables_to_restore_all:
-                    if var.op.name.find('logits') != -1 or var.op.name.find('predictions') != -1:
-                        pass
-                    elif var.op.name.find('block1_final') != -1:
-                        pass
-                    else:
-                        face_variables_to_restore.append(var)
-                print("Face network pretrain, number: %d" % (len(face_variables_to_restore)))
-                self.face_restorer = slim.assign_from_checkpoint_fn(opt.ckpt_face_pretrain, face_variables_to_restore,
-                                                                    True)
+
+            face_variables_to_restore_all = slim.get_model_variables("resnet_v1_50")
+            for var in face_variables_to_restore_all:
+                if var.op.name.find('logits') != -1 or var.op.name.find('predictions') != -1:
+                    pass
+                elif var.op.name.find('block1_final') != -1:
+                    pass
+                else:
+                    face_variables_to_restore.append(var)
+            print("Face network pretrain, number: %d" % (len(face_variables_to_restore)))
+            self.face_restorer = slim.assign_from_checkpoint_fn(opt.ckpt_face_pretrain, face_variables_to_restore, True)
 
         if opt.ckpt_face_id_pretrain is not None:
-            if opt.net_id == 'facenet':
-                # 1
-                # face_variables_to_restore = slim.get_model_variables("InceptionResnetV1")
-                # print("ID network pretrain, number: %d" % (len(face_variables_to_restore)))
-                # self.face_id_restorer = slim.assign_from_checkpoint_fn(opt.ckpt_face_id_pretrain, face_variables_to_restore, True)
+            # 1
+            # face_variables_to_restore = slim.get_model_variables("InceptionResnetV1")
+            # print("ID network pretrain, number: %d" % (len(face_variables_to_restore)))
+            # self.face_id_restorer = slim.assign_from_checkpoint_fn(opt.ckpt_face_id_pretrain, face_variables_to_restore, True)
 
-                # 2
-                face_variables_to_restore = tf.model_variables("InceptionResnetV1")
-                print("Identity variables number: %d" % (len(face_variables_to_restore)))
-                #saver = tf_render.train.Saver([var for var in test_var])
-                self.face_id_restorer = tf.train.Saver(face_variables_to_restore)
-
-        if opt.ckpt_face_3dmm is not None:
-            test_var = tf.model_variables()
-            self.face_3dmm_restorer = tf.train.Saver([var for var in test_var])
+            # 2
+            face_variables_to_restore = tf.model_variables("InceptionResnetV1")
+            print("Identity variables number: %d" % (len(face_variables_to_restore)))
+            #saver = tf_render.train.Saver([var for var in test_var])
+            self.face_id_restorer = tf.train.Saver(face_variables_to_restore)
 
 
     def train(self, opt):
@@ -875,18 +745,18 @@ class MGC_TRAIN(object):
         """
         Build Graph
         """
-
         # all the data directly stored in the self.Graph
         data_loader, batch_sample = self.build_train_graph_dataLoader()
         #with tf.device('/cpu:0'):
         self.build_train_graph()
 
-
         #
         self.collect_summaries()
+
+        #
         with tf.name_scope("parameter_count"):
-            parameter_count = tf.reduce_sum([tf.reduce_prod(tf.shape(v)) \
-                                             for v in tf.trainable_variables()])
+            parameter_count = \
+                tf.reduce_sum([tf.reduce_prod(tf.shape(v)) for v in tf.trainable_variables()])
 
         # model
         self.train_pre(opt)
@@ -908,12 +778,6 @@ class MGC_TRAIN(object):
             """
             Functional Define
             """
-            # debug
-            if opt.debug == True:
-                tf.train.start_queue_runners(sess=sess)
-                sess = tf_debug.LocalCLIDebugWrapperSession(sess, dump_root=opt.debug_dump_root, thread_name_filter="MainThread$")
-                sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
-
             # continue train
             if opt.continue_train:
                 if opt.init_ckpt_file is None:
@@ -931,17 +795,11 @@ class MGC_TRAIN(object):
             else:
                 # pretrain model
                 if opt.ckpt_face_pretrain is not None:
-                    if opt.net == 'resnet':
-                        self.face_restorer(sess)
-                if opt.ckpt_face_3dmm is not None:
-                    self.face_3dmm_restorer.restore(sess, opt.ckpt_face_3dmm)
-
+                    self.face_restorer(sess)
                 step_start = 0 + 1
 
-
             if opt.ckpt_face_id_pretrain is not None:
-                if opt.net_id == 'facenet':
-                    self.face_id_restorer.restore(sess, opt.ckpt_face_id_pretrain)
+                self.face_id_restorer.restore(sess, opt.ckpt_face_id_pretrain)
 
             # init global
             #sess.run(tf_render.global_variables_initializer())
@@ -950,24 +808,16 @@ class MGC_TRAIN(object):
             Loop Start
             """
             start_time = time.time()
-            if opt.timeline:
-                options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-                run_metadata = tf.RunMetadata()
             # """
             # Data init
             # """
-            # file_list = data_loader.format_file_list(opt.dataset_dir, opt.dataset_name_list, self.opt.dataset_smooth_semi, self.opt.batch_single, self.opt.batch_mul)
-            # data_loader.init_data_pipeline(sess, batch_sample, global_all_file_list)
-
-            # check add node
-
             sess.graph.finalize()
             for step in range(step_start, opt.max_steps+1):
                 """
                 Data init
                 """
                 if step == 1 or (opt.dataset_name_list == 'train' and step % self.steps_per_epoch == 0) or (opt.continue_train and step == step_start):
-                    global_all_file_list = data_loader.format_file_list(opt.dataset_dir, opt.dataset_name_list, self.opt.batch_single, self.opt.batch_mul, self.opt.dataset_smooth_semi)
+                    global_all_file_list = data_loader.format_file_list(opt.dataset_dir, opt.dataset_name_list)
                     self.steps_per_epoch = data_loader.steps_per_epoch  # Step count
                     data_loader.init_data_pipeline(sess, batch_sample, global_all_file_list)
                     print("Update dataloader list: (step %d in all %d)" % (step, self.steps_per_epoch))
@@ -997,30 +847,10 @@ class MGC_TRAIN(object):
 
                     fetches["summary"] = sv.summary_op
 
-                    if opt.debug_visual:
-                        fetches["tar_image"] = self.tgt_image
-                        fetches["src_image_stack"] = self.src_image_stack
-                        fetches["gpmm_consist_pixel_tar"] = self.gpmm_consist_pixel_tar
-                        fetches["gpmm_consist_pixel_src"] = self.gpmm_consist_pixel_src
-                        fetches["each_epi_lines"] = self.geo_epi_lines
-                        fetches["geo_epi_distances"] = self.geo_epi_distances
-
                 """
                 *********************************************   Start Trainning   *********************************************
                 """
-                if opt.timeline:
-                    results = sess.run(
-                        fetches,
-                        options=options,
-                        run_metadata=run_metadata
-                    )
-
-                    fetched_timeline = timeline.Timeline(run_metadata.step_stats)
-                    chrome_trace = fetched_timeline.generate_chrome_trace_format()
-                    with open(opt.checkpoint_dir+'/timeline_02_step_%d.json' % step, 'w') as f:
-                        f.write(chrome_trace)
-                else:
-                    results = sess.run(fetches)
+                results = sess.run(fetches)
                 gs = results["global_step"]
 
                 if step % opt.summary_freq == 0:
@@ -1055,73 +885,6 @@ class MGC_TRAIN(object):
                         results["gpmm_reg_shape_loss"] * opt.gpmm_regular_shape_loss_weight,
                         results["gpmm_reg_color_loss"] * opt.gpmm_regular_color_loss_weight))
                     start_time = time.time()
-
-                    if opt.debug_visual:
-                        tgt_image = results["tar_image"]
-                        src_image_stack = results["src_image_stack"]
-                        gpmm_consist_pixel_tar = results["gpmm_consist_pixel_tar"]
-                        gpmm_consist_pixel_src = results["gpmm_consist_pixel_src"]
-                        each_epi_lines = results["each_epi_lines"]
-                        geo_epi_distances = results["geo_epi_distances"]
-
-                        for b in range(tgt_image.shape[0]):
-                            ct_image = []
-
-                            tgt_image_b = tgt_image[b]
-                            src_image_stack_b = src_image_stack[b]
-
-                            gpmm_consist_pixel_tar_b = gpmm_consist_pixel_tar[b]
-                            gpmm_consist_pixel_src_b = gpmm_consist_pixel_src[b]
-
-                            each_epi_lines_b = each_epi_lines[b]
-                            geo_epi_distances_b = geo_epi_distances[b]
-                            # show landmark
-                            for i in range(opt.num_source):
-
-                                import cv2
-                                tgt_image_b = np.array(tgt_image_b)
-                                #print(gpmm_consist_pixel_tar_b[i].shape, gpmm_consist_pixel_tar_b[i])
-                                for pt2d in gpmm_consist_pixel_tar_b[i]:
-                                    cv2.circle(tgt_image_b, (pt2d[0], pt2d[1]), 1, (255.0, 0.0, 0.0), 2)
-
-
-                                src_image_stack_b_i = src_image_stack_b[:, :, 3*i:3*(i+1)].copy()
-                                src_image_stack_b_i = np.array(src_image_stack_b_i)
-                                #print(gpmm_consist_pixel_src_b[i].shape, gpmm_consist_pixel_src_b[i])
-                                for pt2d in gpmm_consist_pixel_src_b[i]:
-                                    cv2.circle(src_image_stack_b_i, (pt2d[0], pt2d[1]), 1, (255.0, 0.0, 0.0), 2)
-
-                                #print(each_epi_lines_b[i].shape, each_epi_lines_b[i])
-                                line_dis_sum = 0
-                                for l in range(65, 68):
-                                    line = each_epi_lines_b[i][l]
-                                    line_dis = geo_epi_distances_b[i][l]
-                                    line_dis = np.mean(line_dis)
-                                    line_dis_sum += line_dis
-                                    a = line[0][0]
-                                    b = line[1][0]
-                                    c = line[2][0]
-                                    p1 = (0, int(-c/b))
-                                    p2 = (223, int((-c-a*223)/b))
-                                    #print(p1, p2)
-                                    print(l, line_dis)
-                                    cv2.line(src_image_stack_b_i, p1, p2, (int(100.0 + l * 2), 0.0, 0.0), thickness=3)
-                                # show epi
-                                ct_image.append(np.concatenate([tgt_image_b, src_image_stack_b_i], axis=1))
-
-                                print(line_dis_sum/68.0)
-
-                            # show final
-                            ct_image = np.concatenate(ct_image, axis=0) # h, w, c
-
-                            cv2.namedWindow('showimage', flags=cv2.WINDOW_NORMAL)
-                            cv2.imshow("showimage", ct_image)
-
-
-                            k = cv2.waitKey(0) & 0xFF
-                            if k == 27:
-                                cv2.destroyAllWindows()
-
                 """
                 Save model
                 """

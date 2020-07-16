@@ -8,7 +8,31 @@ import numpy as np
 # tf_render
 import tensorflow as tf
 
-# self
+# visual lm2d
+def draw_landmark_image(list_img, list_lm, img_height, img_width, color):
+    """
+    :param list_img:
+    :param list_lm:
+    :param img_height:
+    :param img_width:
+    :param color: 1:r 2:g 3:b
+    :return:
+    """
+    list_img_lm = []
+    for i in range(len(list_img)):
+        img = list_img[i]
+
+        if len(list_img) == len(list_lm):
+            lm = list_lm[i]
+        else:
+            lm = list_lm[0]
+        img_draw_lm = img
+
+        img_draw_lm = tf.image.convert_image_dtype(img_draw_lm, dtype=tf.float32)
+        img_draw_lm = render_lm2d_circle_image(img_draw_lm, lm, img_height, img_width, color=color)
+        img_draw_lm = tf.image.convert_image_dtype(img_draw_lm, dtype=tf.uint8)
+        list_img_lm.append(img_draw_lm)
+    return list_img_lm
 
 def render_lm2d(lm2d_batch_xy, h, w):
     """
@@ -307,6 +331,7 @@ def render_lm2d_circle_image(image, lm2d_batch_xy, h, w, color=2, radius=1, ligh
     visual_image = visual_image + visual_lm2d
     return visual_image
 
+# visual heatmap
 def gauss(x, a, b, c, d=0):
     return a * tf.exp(-(x - b)**2 / (2 * c**2)) + d
 
@@ -332,6 +357,7 @@ def pixel_error_heatmap(image_error):
 
     return color
 
+# net image / visual image
 def preprocess_image(image):
     # Assuming input image is uint8
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
@@ -367,10 +393,26 @@ def deprocess_image(image):
     #image = (image + 1.) / 2.
     return tf.image.convert_image_dtype(image, dtype=tf.uint8)
 
+def deprocess_gary_image_series(list_image, convert=True):
+    if isinstance(list_image, list) == False:
+        list_image = [list_image]
 
-"""
-VISUAL
-"""
+    list_image_depro = []
+    for i in range(len(list_image)):
+        image = list_image[i]
+        image_depro = deprocess_gary_image(image, convert)
+        list_image_depro.append(image_depro)
+    return list_image_depro
+
+def deprocess_gary_image(image, convert=True):
+    # Assuming input image is float32
+    image = tf.image.grayscale_to_rgb(image)
+    if convert:
+        image = tf.image.convert_image_dtype(image, dtype=tf.uint8)
+
+    return image
+
+# multi-view image concat/insert
 def concate_image_series(list_image_l, list_image_r, axis):
     list_cat = []
     for i in range(len(list_image_l)):
@@ -407,52 +449,7 @@ def concate_semi_image_series(list, list_src=None):
         list_cat = tf.concat(list_cat, axis=2) # bs, h, w
     return list_cat
 
-
-def draw_landmark_image(list_img, list_lm, img_height, img_width, color):
-    """
-    :param list_img:
-    :param list_lm:
-    :param img_height:
-    :param img_width:
-    :param color: 1:r 2:g 3:b
-    :return:
-    """
-    list_img_lm = []
-    for i in range(len(list_img)):
-        img = list_img[i]
-
-        if len(list_img) == len(list_lm):
-            lm = list_lm[i]
-        else:
-            lm = list_lm[0]
-        img_draw_lm = img
-
-        img_draw_lm = tf.image.convert_image_dtype(img_draw_lm, dtype=tf.float32)
-        img_draw_lm = render_lm2d_circle_image(img_draw_lm, lm, img_height, img_width, color=color)
-        img_draw_lm = tf.image.convert_image_dtype(img_draw_lm, dtype=tf.uint8)
-        list_img_lm.append(img_draw_lm)
-    return list_img_lm
-
-
-def deprocess_gary_image_series(list_image, convert=True):
-    if isinstance(list_image, list) == False:
-        list_image = [list_image]
-
-    list_image_depro = []
-    for i in range(len(list_image)):
-        image = list_image[i]
-        image_depro = deprocess_gary_image(image, convert)
-        list_image_depro.append(image_depro)
-    return list_image_depro
-
-def deprocess_gary_image(image, convert=True):
-    # Assuming input image is float32
-    image = tf.image.grayscale_to_rgb(image)
-    if convert:
-        image = tf.image.convert_image_dtype(image, dtype=tf.uint8)
-
-    return image
-
+# visual depthmap
 def normal_max_for_show(disp):
     disp_max = tf.reduce_max(disp)
     disp_new = disp/disp_max
