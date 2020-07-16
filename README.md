@@ -2,6 +2,8 @@
 Self-Supervised Monocular 3D Face Reconstruction by Occlusion-Aware Multi-view Geometry Consistency(ECCV 2020, official)
 
 # Result
+1. image
+  ![image](https://github.com/jiaxiangshang/MGCNet/blob/master/githubVisual/github_show_compressed.pdf)
 
 # Model
 1. 3dmm + network weight
