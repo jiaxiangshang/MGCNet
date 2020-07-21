@@ -1,0 +1,3 @@
+[submodule "thirdParty/tf_mesh_renderer"]
+	path = thirdParty/tf_mesh_renderer
+	url = https://github.com/jiaxiangshang/tf_mesh_renderer.git
