@@ -6,10 +6,13 @@ This is an official python implementation of MGCNet.
   <p align="center"> 
   <img src="githubVisual/ECCV2020_Github.gif">
   </p>
+  
 2. image
   ![image](https://github.com/jiaxiangshang/MGCNet/blob/master/githubVisual/result_multiPose.jpg)
+  
 3. full video
   Full video can be seen in [YouTube] https://www.youtube.com/watch?v=DXzkO3OwlYQ
+  
 # Running code
 ## 1.Model
 1. 3dmm + network weight
