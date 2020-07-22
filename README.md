@@ -10,7 +10,7 @@ This is an official python implementation of MGCNet.
   </p>
 
 # Running code
-## Model
+## 1.Model
 1. 3dmm + network weight
   https://drive.google.com/file/d/1RkTgcSGNs2VglHriDnyr6ZS5pbnZrUnV/view?usp=sharing
   Extrack this file to /MGCNet/model
@@ -18,15 +18,15 @@ This is an official python implementation of MGCNet.
   https://drive.google.com/file/d/1jVlf05_Bm_nbIQXZRfmz-dA03xGCawBw/view?usp=sharing
   Extrack this file to /MGCNet/pretain
   
-## Data
+## 2.Data
 1. data
   https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
   Extrack this file to /MGCNet/data
   
-## Requirement
+## 3.Requirement
 1. as the requirement.txt
 
-## Time
+## 4.Time
 GPU is highly recommended. The run time is ~0.01s with GPU(GeForce GTX 1080) and ~0.2s with CPU(Intel(R) Xeon(R) CPU E5-2640 v4 @ 2.40GHz).
 
 # Citation
