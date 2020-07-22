@@ -2,13 +2,14 @@
 This is an official python implementation of MGCNet.
 
 # Result
-1. image
-  ![image](https://github.com/jiaxiangshang/MGCNet/blob/master/githubVisual/result_multiPose.jpg)
-2. video
+1. video
   <p align="center"> 
   <img src="githubVisual/ECCV2020_Github.gif">
   </p>
-
+2. image
+  ![image](https://github.com/jiaxiangshang/MGCNet/blob/master/githubVisual/result_multiPose.jpg)
+3. full video
+  Full video can be seen in [YouTube] https://www.youtube.com/watch?v=DXzkO3OwlYQ
 # Running code
 ## 1.Model
 1. 3dmm + network weight
@@ -22,12 +23,24 @@ This is an official python implementation of MGCNet.
 1. data
   https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
   Extrack this file to /MGCNet/data
-  
+2. data: landmark ground truth
+3. data: skin prob
+
 ## 3.Requirement
 1. as the requirement.txt
 
 ## 4.Time
-GPU is highly recommended. The run time is ~0.01s with GPU(GeForce GTX 1080) and ~0.2s with CPU(Intel(R) Xeon(R) CPU E5-2640 v4 @ 2.40GHz).
+The run time is ~0.02s with GPU(GeForce GTX 2070) and ~0.8s with CPU.
+
+## 5.Testing
+
+## 6.Training
+1. cmd
+2. 
+
+# Useful tools
+1. comparison rendering
+2. 
 
 # Citation
 If you use this code, please consider citing:
