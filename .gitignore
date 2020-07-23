@@ -11,11 +11,13 @@
 src_common/eval/
 
 # exp
+data/
 pretrain/
 script/
 server/
 local_face_debug.txt
 thirdParty/
+logs*/
 
 # 
 *.zip

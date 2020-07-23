@@ -19,8 +19,8 @@ _deep_learning_dir = os.path.dirname(_tool_data_dir) # ../
 print(_deep_learning_dir)
 sys.path.append(_deep_learning_dir) # /home/..../pytorch3d
 
-from HDF5IO import *
-from trimesh_util import *
+from .HDF5IO import *
+from .trimesh_util import *
 
 
 class BFM_singleTopo():

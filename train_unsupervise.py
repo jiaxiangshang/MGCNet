@@ -92,8 +92,8 @@ FLAGS = flags.FLAGS
 """
 CUDA_VISIBLE_DEVICES=${gpu} python train_unsupervise.py --dataset_name_list train \
 --dataset_loader data_loader_semi_unsupervised_skin \
---dataset_dir /data/0_eccv2020_final/0_Benchmark_Server/eccv2020_MGCNet_data \
---checkpoint_dir /home/jshang/SHANG_Exp/ECCV2020/release_2020.07.10/0_local \
+--dataset_dir ./data/eccv2020_MGCNet_data \
+--checkpoint_dir ./logs_release_2020.07.23/0_local \
 --learning_rate 0.0001 --MULTIVIEW_weight 1.0 \
 --photom_weight 0.15 --ssim_weight 0.0 --epipolar_weight 0.00 --depth_weight 0.0001 \
 --gpmm_lm_loss_weight 0.001 --gpmm_pixel_loss_weight 1.9 --gpmm_id_loss_weight 0.2 \
@@ -119,7 +119,7 @@ def main(_):
     # print and store all flags
     print('**************** Arguments ******************')
     for key in FLAGS.__flags.keys():
-        print '  {}: {}'.format(key, getattr(FLAGS, key))
+        print('{}: {}'.format(key, getattr(FLAGS, key)))
     print('**************** Arguments ******************')
 
     if not os.path.exists(FLAGS.checkpoint_dir):

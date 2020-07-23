@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 # self
-from align import lm2d_trans_zhoulei
+from .align import lm2d_trans
 
 # main
 def get_facenet_align_lm(img_height):
@@ -73,7 +73,7 @@ def facenet_align(list_image, list_lm, std_lm, img_height, img_width):
         # lm2d_align = lm_dlib_to_celebA(lm2d_align)
         #
         with tf.device('/cpu:0'):
-            trans_mat = lm2d_trans_zhoulei(std_lm, lm2d_align)
+            trans_mat = lm2d_trans(std_lm, lm2d_align)
             # image_warp = transform(images, trans_mat)
             flat_transforms = tf.contrib.image.matrices_to_flat_transforms(trans_mat)
             image_warp = tf.contrib.image.transform(images_pad, flat_transforms, interpolation='BILINEAR',
