@@ -24,34 +24,6 @@ def write_self_lm(path_info_save, lm_all, inter=","):
                 f_info.write("%f" % (lm_xyz))
         f_info.write('\n')
 
-def write_NoW_lm(path_info_save, lm_all, inter=" "):
-    if isinstance(path_info_save, str):
-        f_info = open(path_info_save, 'w')
-    else:
-        f_info = path_info_save
-
-    if isinstance(lm_all, list):
-        lm_all = np.array(lm_all)
-
-    for i in range(lm_all.shape[0]):
-        lm = lm_all[i]
-        for j in range(len(lm)):
-            lm_xyz = lm[j]
-            if j != len(lm)-1:
-                f_info.write(("%f"+inter) % (lm_xyz))
-            else:
-                f_info.write("%f" % (lm_xyz))
-        f_info.write('\n')
-
-def write_self_facebbox(path_info_save, rect):
-    with open(path_info_save, 'w') as f_info:
-        for i in range(len(rect)):
-            lrtb = rect[i]
-            f_info.write("%f" % (lrtb))
-            if i != len(rect)-1:
-                f_info.write(",")
-        f_info.write("\n")
-
 def parse_self_lm(path_info_save):
     with open(path_info_save) as f_info:
         lines = f_info.readlines()
@@ -62,34 +34,6 @@ def parse_self_lm(path_info_save):
             xyz = [float(ele) for ele in xyz]
             list_lm.append(xyz)
     return list_lm
-
-def parse_PRN_lm(path_info_save):
-    with open(path_info_save) as f_info:
-        lines = f_info.readlines()
-        list_lm = []
-        for lm2d in lines:
-            xyz = lm2d[:-1].split(' ')
-            xyz = [float(ele) for ele in xyz]
-            list_lm.append(xyz)
-    return list_lm
-
-def parse_fwh_lm(path_info_save):
-    with open(path_info_save) as f_info:
-        lines = f_info.readlines()
-        lines = lines[1:]
-        list_lm = []
-        for lm2d in lines:
-            xyz = lm2d[:-1].split(' ')
-            xyz = [float(ele) for ele in xyz]
-            list_lm.append(xyz)
-    return list_lm
-
-def parse_self_facebbox(path_info_save):
-    with open(path_info_save) as f_info:
-        lines = f_info.readline()
-        x_left, y_top, x_right, y_bottom, scale = lines.split(',')
-
-    return float(x_left), float(y_top), float(x_right), float(y_bottom), float(scale)
 
 def format_file_list(data_root, split, fmt=None, sort=False):
     with open(data_root + '/%s.txt' % split, 'r') as f:
@@ -122,37 +66,6 @@ def format_file_list(data_root, split, fmt=None, sort=False):
 
     return image_file_list, cam_file_list, subfolders, frame_ids
 
-def format_folder_list(data_root, split, fmt=None, sort=False):
-    with open(data_root + '/%s.txt' % split, 'r') as f:
-        frames = f.readlines()
-
-    if sort:
-        import re
-        def atoi(text):
-            return int(text) if text.isdigit() else text
-
-        def natural_keys(text):
-            '''
-            alist.sort(key=natural_keys) sorts in human order
-            http://nedbatchelder.com/blog/200712/human_sorting.html
-            (See Toothy's implementation in the comments)
-            '''
-            return [atoi(c) for c in re.split(r'(\d+)', text)]
-
-        frames = sorted(frames, key=natural_keys)
-
-    subfolders = [x.split(' ')[0] for x in frames]
-    frame_ids = [x.split(' ')[1][:-1] for x in frames]
-
-    """
-    Save the leaf subfolder with file in it
-    """
-    folder_file_dict = defaultdict(list)
-    for i in range(len(subfolders)):
-        folder_file_dict[subfolders[i]].append(frame_ids[i])
-
-    return folder_file_dict
-
 # MFS
 def write_self_6DoF(path_info_save, dof, inter=","):
     if isinstance(path_info_save, str):
@@ -177,32 +90,6 @@ def parse_self_6DoF(path_info_save, inter=","):
     dof = dof.split(inter)
     dof = [float(p) for p in dof]
     return dof
-
-def parse_self_rotMtx(path_info_save, inter=","):
-    if isinstance(path_info_save, str):
-        f_info = open(path_info_save, 'w')
-    else:
-        f_info = path_info_save
-
-    rot_mtx = f_info.readline()[:-1]
-    rot_mtx = rot_mtx.split(inter)
-    rot_mtx = [float(p) for p in rot_mtx]
-    rot_mtx = np.array(rot_mtx)
-    rot_mtx = np.reshape(rot_mtx, [3,3])
-    return rot_mtx
-
-def parse_self_trans(path_info_save, inter=","):
-    if isinstance(path_info_save, str):
-        f_info = open(path_info_save, 'w')
-    else:
-        f_info = path_info_save
-
-    rot_mtx = f_info.readline()[:-1]
-    rot_mtx = rot_mtx.split(inter)
-    rot_mtx = [float(p) for p in rot_mtx]
-    rot_mtx = np.array(rot_mtx)
-    #rot_mtx = np.reshape(rot_mtx, [3,3])
-    return rot_mtx
 
 
 def write_self_intrinsicMtx(path_info_save, intrinsic, inter=","):

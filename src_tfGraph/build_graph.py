@@ -2,7 +2,6 @@ from __future__ import division
 from __future__ import print_function
 
 #
-import math
 import os
 import time
 
@@ -15,16 +14,13 @@ from src_common.geometry.gpmm.bfm09_tf_uv import BFM_TF
 # common
 from src_common.common.parse_encoder import parse_coeff_list
 from src_common.geometry.camera_distribute.camera_utils import *
-from src_common.geometry.align_facenet import get_facenet_align_lm
+from src_common.geometry.face_align.align_facenet import get_facenet_align_lm
 from .deep_3dmm_decoder import *
 # multiview
 from src_common.geometry.geo_utils import projective_inverse_warp
 from .decoder_multiView import *
 # tf
-from tensorflow.python import debug as tf_debug
 #
-from tensorflow.python import pywrap_tensorflow
-from tensorflow.python.client import timeline
 # loss
 from .deep_3dmm_loss import *
 

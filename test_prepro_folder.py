@@ -57,11 +57,9 @@ flags.DEFINE_boolean("flag_visual", False, "")
 flags.DEFINE_boolean("flag_fore", False, "")
 
 # eval
-flags.DEFINE_boolean("flag_now", False, "3DMM coeffient rank")
-flags.DEFINE_boolean("flag_mesh_id", False, "3DMM coeffient rank")
-flags.DEFINE_boolean("flag_full", True, "3DMM coeffient rank")
-# visual
+flags.DEFINE_boolean("flag_mesh_id", False, "3DMM coeffient rank")\
 
+# visual
 flags.DEFINE_boolean("flag_overlay_save", False, "")
 flags.DEFINE_boolean("flag_overlayOrigin_save", False, "")
 flags.DEFINE_boolean("flag_main_save", False, "")
@@ -70,21 +68,21 @@ flags.DEFINE_boolean("flag_fml_5", False, "")
 FLAGS = flags.FLAGS
 
 """
-python ./test_unsupervise.py --mode test_one \
+python ./test_prepro_folder.py --mode test_one \
 --dataset_dir /data/0_eccv2020_final/0_Benchmark_Server/32_AFLW2000_3D_tensor \
 --output_dir /home/jshang/SHANG_Exp/ECCV2020/release_2020.07.10/0_local \
 --ckpt_file /home/jshang/SHANG_Exp/ECCV2020/rebuttal_2020.04.04/final_model_main/70_21_warpdepth_reg/model-400000 \
 --path_gpmm /home/jshang/SHANG_Data/ThirdLib/BFM2009/bfm09_trim_exp_uv_presplit.h5 \
 --flag_fore 1 \
---flag_mesh_id False --flag_full False \
+--flag_mesh_id False \
 --flag_visual True --flag_fml_5 True
 
-python ./tfmatchd/face/test_unsupervise.py --mode test_one \
+python ./tfmatchd/face/test_prepro_folder.py --mode test_one \
 --dataset_dir /data/0_eccv2020_final/0_Benchmark_Server/32_AFLW2000_3D_tensor \
 --output_dir /home/jshang/SHANG_Exp/ECCV2020/release_2020.07.10/0_local \
 --ckpt_file /home/jshang/SHANG_Exp/ECCV2020/rebuttal_2020.04.04/final_model_main/70_21_warpdepth_reg/model-400000 \
 --path_gpmm /home/jshang/SHANG_Data/ThirdLib/BFM2009/bfm09_dy_gyd_presplit.h5 \
---flag_mesh_id=False --flag_now=False --flag_full=False --flag_visual_origin=False --flag_visual_align=True --flag_eval=True
+--flag_mesh_id=False --flag_now=False --flag_visual_origin=False --flag_visual_align=True --flag_eval=True
 """
 
 def inverse_affine_warp_overlay(m_inv, image_ori, image_now, image_mask_now):
@@ -224,6 +222,7 @@ if __name__ == '__main__':
                     break
                 print("Sample: (%d in %d) with %s" % (idx, len(image_file_list), name_subfolders[idx]))
 
+                #
                 dic_subfolder_save = os.path.join(FLAGS.output_dir, name_subfolders[idx])
                 if not os.path.exists(dic_subfolder_save):
                     os.makedirs(dic_subfolder_save)
@@ -255,70 +254,29 @@ if __name__ == '__main__':
                 vertex_color_ori_full = np.clip(vertex_color_ori_full, 0, 1)
 
                 if FLAGS.flag_eval:
-                    if FLAGS.flag_now:
-                        """
-                        Mesh ID
-                        """
+                    """
+                    Mesh ID
+                    """
+                    if FLAGS.flag_mesh_id:
                         mesh_tri_id = trimesh.Trimesh(
                             vertex_shape_id.reshape(-1, 3),
                             system.h_lrgp.h_curr.mesh_tri_np.reshape(-1, 3),
                             vertex_colors=vertex_color.reshape(-1, 3),
                             process=False
                         )
-                        path_mesh_id_save = os.path.join(dic_subfolder_save, name_image_pure + ".obj")
+                        path_mesh_id_save = os.path.join(dic_subfolder_save, name_image_pure + ".ply")
                         mesh_tri_id.export(path_mesh_id_save)
 
-                        """
-                        Landmark 3D
-
-                        """
-                        idx_now_lm = [1314, 6341, 9832, 14714, 8200, 5520, 10537]
-                        lm3d = vertex_shape_id[idx_now_lm]
-                        path_lm3d_save = os.path.join(dic_subfolder_save, name_image_pure + ".txt")
-                        write_NoW_lm(path_lm3d_save, lm3d, inter=' ')
                     else:
-                        """
-                        Mesh ID
-                        """
-                        if FLAGS.flag_mesh_id:
-                            if FLAGS.flag_full:
-                                mesh_tri_id = trimesh.Trimesh(
-                                    vertex_shape_id_full.reshape(-1, 3),
-                                    system.h_lrgp.h_full.mesh_tri_np.reshape(-1, 3),
-                                    vertex_colors=vertex_color_ori_full.reshape(-1, 3),
-                                    process=False
-                                )
-                                path_mesh_id_save = os.path.join(dic_subfolder_save, name_image_pure + "_id.ply")
-                                mesh_tri_id.export(path_mesh_id_save)
-                            else:
-                                mesh_tri_id = trimesh.Trimesh(
-                                    vertex_shape_id.reshape(-1, 3),
-                                    system.h_lrgp.h_curr.mesh_tri_np.reshape(-1, 3),
-                                    vertex_colors=vertex_color.reshape(-1, 3),
-                                    process=False
-                                )
-                                path_mesh_id_save = os.path.join(dic_subfolder_save, name_image_pure + ".ply")
-                                mesh_tri_id.export(path_mesh_id_save)
+                        mesh_tri = trimesh.Trimesh(
+                            vertex_shape.reshape(-1, 3),
+                            system.h_lrgp.h_curr.mesh_tri_np.reshape(-1, 3),
+                            vertex_colors=vertex_color.reshape(-1, 3),
+                            process=False
+                        )
 
-                        else:
-                            if FLAGS.flag_full:
-                                mesh_tri = trimesh.Trimesh(
-                                    vertex_shape_full.reshape(-1, 3),
-                                    system.h_lrgp.h_full.mesh_tri_np.reshape(-1, 3),
-                                    vertex_colors=vertex_color_ori_full.reshape(-1, 3),
-                                    process=False
-                                )
-
-                            else:
-                                mesh_tri = trimesh.Trimesh(
-                                    vertex_shape.reshape(-1, 3),
-                                    system.h_lrgp.h_curr.mesh_tri_np.reshape(-1, 3),
-                                    vertex_colors=vertex_color.reshape(-1, 3),
-                                    process=False
-                                )
-
-                            path_mesh_save = os.path.join(dic_subfolder_save, name_image_pure + ".ply")
-                            mesh_tri.export(path_mesh_save)
+                        path_mesh_save = os.path.join(dic_subfolder_save, name_image_pure + ".ply")
+                        mesh_tri.export(path_mesh_save)
                         """
                         Landmark 3D
 
