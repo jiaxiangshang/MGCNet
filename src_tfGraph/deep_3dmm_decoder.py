@@ -10,10 +10,10 @@ import tensorflow as tf
 from src_common.net.resnet_v1_3dmm import encoder_resnet50
 
 from src_common.net.inception_resnet_v1 import identity_inference
-from src_common.geometry.align_facenet import facenet_align
+from src_common.geometry.face_align.align_facenet import facenet_align
 
 from src_common.geometry.camera_distribute.camera_utils import project3d_batch
-from src_common.geometry.lighting import vertex_normals_pre_split_fixtopo
+from src_common.geometry.render.lighting import vertex_normals_pre_split_fixtopo
 from src_common.geometry.render.api_tf_mesh_render import mesh_depthmap_camera, mesh_renderer_camera, mesh_renderer_camera_light, \
     tone_mapper
 
