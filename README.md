@@ -20,7 +20,7 @@ cd MGCNet
 (sudo) pip install -r requirement.txt
 ```
 The thirdlib(diff render) is from https://github.com/google/tf_mesh_renderer.
-I fork and make changes, and the setting is bazel==10.1, gcc==5.4
+I fork and make changes, and the setting is bazel==10.1, gcc==5.4, the command is bazel build ...
 
 ## 2.Model
 1. 3dmm + network weight
@@ -38,7 +38,7 @@ I fork and make changes, and the setting is bazel==10.1, gcc==5.4
 2. data: landmark ground truth(https://github.com/1adrianb/2D-and-3D-face-alignment)
    We use the SFD face detector
 3. data: skin prob
-  I get help from Yu DENG(t-yudeng@microsoft.com), maybe your can ask help from him.
+  I get the code from Yu DENG(t-yudeng@microsoft.com), maybe your can ask help from him.
 
 ## 4.Testing
 1. test_image.py(unfinish)
