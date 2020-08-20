@@ -11,7 +11,8 @@
 src_common/eval/
 
 # exp
-data/
+data/train
+model/
 pretrain/
 script/
 server/
