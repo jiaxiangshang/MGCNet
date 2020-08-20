@@ -1,4 +1,4 @@
-# Self-Supervised Monocular 3D Face Reconstruction by Occlusion-Aware Multi-view Geometry Consistency(ECCV 2020)
+# Self-Supervised Monocular 3D Face Reconstruction by Occlusion-Aware Multi-view Geometry Consistency(ECCV 2020, Debuging now)
 This is an official python implementation of MGCNet. This is the pre-print version https://arxiv.org/abs/2007.12494.
 
 # Result
