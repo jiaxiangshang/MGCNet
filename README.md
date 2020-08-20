@@ -14,6 +14,7 @@ This is an official python implementation of MGCNet. This is the pre-print versi
   
 # Running code
 ## 1. Code + Requirement + thirdlib
+We run this with python3.7
 ```bash
 git clone --recursive https://github.com/jiaxiangshang/MGCNet.git
 cd MGCNet
