@@ -943,13 +943,6 @@ class MGC_TRAIN(object):
         # multi-level
         self.list_vertex, self.list_vertexNormal, self.list_vertexColor, self.list_vertexShade, self.list_vertexColorOri = \
             decoder_colorMesh_test(self.h_lrgp, self.dict_inter_comm, exp=True)
-        self.list_vertex_full, _,  self.list_vertexColor_full, _, self.gpmm_vertexColorOri_full = \
-            decoder_colorMesh_test(self.h_lrgp, self.dict_inter_comm, exp=True, full=True)
-
-        self.list_vertex_id, _,  _, _, _ = \
-            decoder_colorMesh_test(self.h_lrgp, self.dict_inter_comm, exp=False)
-        self.list_vertex_id_full, _,  _, _, _ = \
-            decoder_colorMesh_test(self.h_lrgp, self.dict_inter_comm, exp=False, full=True)
 
         # visual
         if opt.flag_visual:
@@ -1079,14 +1072,10 @@ class MGC_TRAIN(object):
         # Eval
         # 0. vertex
         fetches['vertex_shape'] = self.list_vertex
-        fetches['vertex_shape_full'] = self.list_vertex_full
-        fetches['vertex_shape_id'] = self.list_vertex_id
-        fetches['vertex_shape_id_full'] = self.list_vertex_id_full
+
         # 1. color
         fetches['vertex_color'] = self.list_vertexColor
-        fetches['vertex_color_full'] = self.list_vertexColor_full
         fetches['vertex_color_ori'] = self.list_vertexColorOri
-        fetches['vertex_color_ori_full'] = self.gpmm_vertexColorOri_full
 
         # Visual
         if self.opt.flag_visual:

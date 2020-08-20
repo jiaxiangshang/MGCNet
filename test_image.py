@@ -1,6 +1,7 @@
 from __future__ import division
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import sys
 from shutil import copyfile
 
@@ -48,14 +49,14 @@ flags.DEFINE_integer("gpmm_exp_rank", 64, "3DMM coeffient rank")
 
 #
 flags.DEFINE_boolean("flag_eval", True, "3DMM coeffient rank")
-flags.DEFINE_boolean("flag_visual", False, "")
-flags.DEFINE_boolean("flag_fore", False, "")
+flags.DEFINE_boolean("flag_visual", True, "")
+flags.DEFINE_boolean("flag_fore", True, "")
 
 # visual
-flags.DEFINE_boolean("flag_overlay_save", False, "")
-flags.DEFINE_boolean("flag_overlayOrigin_save", False, "")
-flags.DEFINE_boolean("flag_main_save", False, "")
-flags.DEFINE_boolean("flag_fml_5", False, "")
+flags.DEFINE_boolean("flag_overlay_save", True, "")
+flags.DEFINE_boolean("flag_overlayOrigin_save", True, "")
+flags.DEFINE_boolean("flag_main_save", True, "")
+flags.DEFINE_boolean("flag_fml_5", True, "")
 
 FLAGS = flags.FLAGS
 
@@ -102,22 +103,21 @@ if __name__ == '__main__':
     load model
     """
     test_var = tf.global_variables()#tf.model_variables()
-    # this because we need using the 
+    # this because we need using the
     test_var = [tv for tv in test_var if tv.op.name.find('VertexNormalsPreSplit') == -1]
     saver = tf.train.Saver([var for var in test_var])
 
-    config = tf.ConfigProto()
+    #config = tf.ConfigProto()
+    config=tf.ConfigProto(device_count={'cpu':0})
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sess.run(tf.global_variables_initializer())
         sess.graph.finalize()
-
         saver.restore(sess, FLAGS.ckpt_file)
-
         #
         import time
         # preprocess
-        path_image = os.path.join(FLAGS.dic_image, 'image00008.jpg')
+        path_image = os.path.join(FLAGS.dic_image, 'image04275.jpg')
         image_bgr = cv2.imread(path_image)
         image_rgb = image_bgr[..., ::-1]
         if image_bgr is None:
@@ -128,15 +128,15 @@ if __name__ == '__main__':
 
         # face image align by landmark
         # we also provide a tools to generate 'std_224_bfm09'
-        lm_trans, img_warped, tform = crop_align_affine_transform(lm_howfar, image_bgr, FLAGS.img_height, std_224_bfm09)
+        lm_trans, img_warped, tform = crop_align_affine_transform(lm_howfar, image_rgb, FLAGS.img_height, std_224_bfm09)
         image_rgb_b = img_warped[None, ...]
         # M_inv is used to back project the face reconstruction result to origin image
         M_inv = np.linalg.inv(tform.params)
         M = tform.params
-        print(np.matmul(M_inv, M))
+        #print(np.matmul(M_inv, M))
 
         """
-        Start (below code is as same as "test_prepro_folder.py")
+        Start
         """
         time_st = time.time()
         pred = system.inference(sess, image_rgb_b)
@@ -157,9 +157,9 @@ if __name__ == '__main__':
         """
         b = 0
         vertex_shape = pred['vertex_shape'][0][b, :, :]
-
-        vertex_color = pred['vertex_color'][0][b, :, :][0]
+        vertex_color = pred['vertex_color'][0][b, :, :]
         vertex_color = np.clip(vertex_color, 0, 1)
+        #vertex_color_rgba = np.concatenate([vertex_color, np.ones([vertex_color.shape[0], 1])], axis=1)
         vertex_color_ori = pred['vertex_color_ori'][0][b, :, :]
         vertex_color_ori = np.clip(vertex_color_ori, 0, 1)
 
@@ -170,12 +170,12 @@ if __name__ == '__main__':
                 vertex_colors=vertex_color.reshape(-1, 3),
                 process=False
             )
+            mesh_tri.visual.kind == 'vertex'
 
             path_mesh_save = os.path.join(FLAGS.output_dir, name_image_pure + ".ply")
             mesh_tri.export(path_mesh_save)
             """
             Landmark 3D
-
             """
             path_lm3d_save = os.path.join(FLAGS.output_dir, name_image_pure + "_lm3d.txt")
             lm_68 = vertex_shape[system.h_lrgp.h_curr.idx_lm68_np]
@@ -217,8 +217,7 @@ if __name__ == '__main__':
             result_overlayLight_255 = pred['overlayLight_255'][0][b, :, :]
 
             # common
-            visual_concat = np.concatenate(
-                [image_input, result_overlay_255, result_overlayGeo_255, result_apper_mulPose_255], axis=1)
+            visual_concat = np.concatenate([image_input[0], result_overlay_255, result_overlayGeo_255, result_apper_mulPose_255], axis=1)
             path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_mulPoses.jpg")
             plt.imsave(path_image_save, visual_concat)
 
@@ -228,7 +227,7 @@ if __name__ == '__main__':
 
                 path_image_origin = os.path.join(dic_image, name_image_pure + ".jpg")
                 image_origin = cv2.imread(path_image_origin)
-                
+
                 gpmm_render_overlay_wo = inverse_affine_warp_overlay(
                     M_inv, image_origin, result_overlay_255, gpmm_render_mask)
                 gpmm_render_overlay_texture_wo = inverse_affine_warp_overlay(

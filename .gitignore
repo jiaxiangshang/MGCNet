@@ -11,6 +11,7 @@
 src_common/eval/
 
 # exp
+data/output_test_one
 data/train
 model/
 pretrain/
