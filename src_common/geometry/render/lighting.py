@@ -25,7 +25,7 @@ def _prepare_vertices_and_faces(vertices, faces):
 def _get_face_normals(vertices, faces):
 
     vertices_ndim = vertices.get_shape().ndims
-    v_trans_axis = [vertices_ndim - 2] + range(vertices_ndim - 2) + [vertices_ndim - 1]
+    v_trans_axis = [vertices_ndim - 2] + list(range(vertices_ndim - 2)) + [vertices_ndim - 1]
     vertices_by_index = tf.transpose(vertices, v_trans_axis)  # indexed by vertex-index, *, x/y/z
     vertices_by_face = tf.gather(vertices_by_index, faces)  # indexed by face-index, vertex-in-face, *, x/y/z
     normals_by_face = tf.cross(vertices_by_face[:, 1] - vertices_by_face[:, 0], vertices_by_face[:, 2] - vertices_by_face[:, 0])  # indexed by face-index, *, x/y/z

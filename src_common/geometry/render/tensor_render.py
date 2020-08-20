@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 #
-from api_tf_mesh_render import mesh_depthmap_camera, mesh_renderer_camera, mesh_renderer_camera_light
+from .api_tf_mesh_render import mesh_depthmap_camera, mesh_renderer_camera, mesh_renderer_camera_light
 
 def gpmm_render_image(opt, vertex, tri, vertex_normal, vertex_color, mtx_perspect_frustrum, mtx_model_view, cam_position):
     """
