@@ -984,6 +984,7 @@ class MGC_TRAIN(object):
 
                 gpmm_render = gpmm_face_replace(self.list_input_float[v], gpmm_render, gpmm_render_mask_v)
                 gpmm_render = tf.clip_by_value(gpmm_render, 0.0, 1.0)
+                #gpmm_render = tf.Print(gpmm_render, [gpmm_render], message='gpmm_render')
                 #
                 gpmm_render_visual = tf.image.convert_image_dtype(gpmm_render[0], dtype=tf.uint8)
                 overlay_single.append(gpmm_render_visual)

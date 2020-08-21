@@ -35,6 +35,7 @@ flags = tf.app.flags
 flags.DEFINE_string("dic_image", "data/test/", "Dataset directory")
 flags.DEFINE_string("output_dir", "data/output_test_one", "Output directory")
 flags.DEFINE_string("ckpt_file", "model/model-400000", "checkpoint file")
+#flags.DEFINE_string("ckpt_file", "/home/jiaxiangshang/Downloads/202008/70_31_warpdepthepi_reg/model-400000", "checkpoint file")
 
 #
 flags.DEFINE_integer("batch_size", 1, "The size of of a sample batch")
@@ -50,26 +51,14 @@ flags.DEFINE_integer("gpmm_exp_rank", 64, "3DMM coeffient rank")
 #
 flags.DEFINE_boolean("flag_eval", True, "3DMM coeffient rank")
 flags.DEFINE_boolean("flag_visual", True, "")
-flags.DEFINE_boolean("flag_fore", True, "")
+flags.DEFINE_boolean("flag_fore", False, "")
 
 # visual
 flags.DEFINE_boolean("flag_overlay_save", True, "")
 flags.DEFINE_boolean("flag_overlayOrigin_save", True, "")
 flags.DEFINE_boolean("flag_main_save", True, "")
-flags.DEFINE_boolean("flag_fml_5", True, "")
 
 FLAGS = flags.FLAGS
-
-"""
-python ./test_prepro_folder.py --mode test_one \
---dataset_dir /data/0_eccv2020_final/0_Benchmark_Server/32_AFLW2000_3D_tensor \
---output_dir /home/jshang/SHANG_Exp/ECCV2020/release_2020.07.10/0_local \
---ckpt_file /home/jshang/SHANG_Exp/ECCV2020/rebuttal_2020.04.04/final_model_main/70_21_warpdepth_reg/model-400000 \
---path_gpmm /home/jshang/SHANG_Data/ThirdLib/BFM2009/bfm09_trim_exp_uv_presplit.h5 \
---flag_fore 1 \
---flag_mesh_id False \
---flag_visual True --flag_fml_5 True
-"""
 
 if __name__ == '__main__':
     FLAGS.dic_image = os.path.join(_cur_dir, FLAGS.dic_image)
@@ -250,19 +239,19 @@ if __name__ == '__main__':
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayMain.jpg")
                 plt.imsave(path_image_save, result_overlayMain_255)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayTexMain.jpg")
-                # plt.imsave(path_image_gray_main_overlay, gpmm_render_overlay)
+                #plt.imsave(path_image_gray_main_overlay, gpmm_render_overlay)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayGeoMain.jpg")
                 plt.imsave(path_image_save, result_overlayGeoMain_255)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayLightMain.jpg")
-                # cv2.imwrite(path_image_save, result_overlayLightMain_255)
+                #cv2.imwrite(path_image_save, result_overlayLightMain_255)
 
             if FLAGS.flag_overlay_save:
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlay.jpg")
                 plt.imsave(path_image_save, result_overlay_255)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayTex.jpg")
-                # cv2.imwrite(path_image_save, result_overlayTex_255)
+                plt.imsave(path_image_save, result_overlayTex_255)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayGeo.jpg")
                 plt.imsave(path_image_save, result_overlayGeo_255)
                 path_image_save = os.path.join(FLAGS.output_dir, name_image_pure + "_overlayLight.jpg")
-                # cv2.imwrite(path_image_save, result_overlayLight_255)
+                plt.imsave(path_image_save, result_overlayLight_255)
 
