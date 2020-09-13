@@ -20,11 +20,15 @@ git clone --recursive https://github.com/jiaxiangshang/MGCNet.git
 cd MGCNet
 (sudo) pip install -r requirement.txt
 ```
-The thirdlib(diff render) is from https://github.com/google/tf_mesh_renderer.
-I fork and make changes, and the setting is bazel==10.1, gcc==5.*, the command is 
+(1) The thirdlib(diff render) is from https://github.com/google/tf_mesh_renderer. Many issue happens here, so let's make this more clear.
+This diff render does not return triangle id for each pixel after raterise, we do this by our self and add these changes as submodule to this github. 
+(2) Then how to compile, the setting is bazel==10.1, gcc==5.*, the command is 
 ```bash
 bazel build ...
 ```
+The gcc/g++ version higher than 5.* will bring problems, a good solution is virtual environment with a gcc maybe 5.5.
+If the The gcc/g++ version is 4.*, you can try to change the compile cmd in BUILD file, about the flag -D_GLIBCXX_USE_CXX11_ABI=0 or -D_GLIBCXX_USE_CXX11_ABI=1
+Which is used for new cxx11 property for gcc5.*
 
 ## 2.Model
 1. 3dmm model + network weight(I will check and update on August 21)
@@ -66,7 +70,12 @@ bazel build ...
 If you use this code, please consider citing:
 
 ```
-eccv
+@article{shang2020self,
+  title={Self-Supervised Monocular 3D Face Reconstruction by Occlusion-Aware Multi-view Geometry Consistency},
+  author={Shang, Jiaxiang and Shen, Tianwei and Li, Shiwei and Zhou, Lei and Zhen, Mingmin and Fang, Tian and Quan, Long},
+  journal={arXiv preprint arXiv:2007.12494},
+  year={2020}
+}
 ```
 
 # Contacts
