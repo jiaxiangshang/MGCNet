@@ -22,6 +22,7 @@ cd MGCNet
 ```
 (1) The thirdlib(diff render) is from https://github.com/google/tf_mesh_renderer. Many issue happens here, so let's make this more clear.
 This diff render does not return triangle id for each pixel after raterise, we do this by our self and add these changes as submodule to this github. 
+
 (2) Then how to compile, the setting is bazel==10.1, gcc==5.*, the command is 
 ```bash
 bazel build ...
