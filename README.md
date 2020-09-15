@@ -46,26 +46,25 @@ If the The gcc/g++ version is 4.* that you can try to change the compile cmd in 
 ## 3.Data
 1. data demo: https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
   
-  Extract this file to /MGCNet/data, we can not provide all datas, as it is too large and the license of MPIE dataset http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html not allow me to do this.
+   Extract this file to /MGCNet/data, we can not provide all datas, as it is too large and the license of MPIE dataset http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html not allow me to do this.
   
 2. data: landmark ground truth 
 
-  The detection method from https://github.com/1adrianb/2D-and-3D-face-alignment, and we use the SFD face detector
+   The detection method from https://github.com/1adrianb/2D-and-3D-face-alignment, and we use the SFD face detector
   
 3. data: skin probability
 
-  I get this part code from Yu DENG(t-yudeng@microsoft.com), maybe you can ask help from him.
+   I get this part code from Yu DENG(t-yudeng@microsoft.com), maybe you can ask help from him.
 
 ## 4.Testing
 1. test_image.py
   This is used to inference a single unprocessed image(cmd in file).
   This file can also render the images(geometry, texture, shading,multi-pose), like above or in our paper(read code), which makes visualization and comparison more convenient.
+  
 2. preprocess
   All the preprocess has been included in 'test_image.py', we show the outline here.
   (1) face detection and face alignment are package in ./tools/preprocess/detect_landmark,py.
-  
   (2) face alignment by affine transformation to warp the unprocess image.
-  
   Test all the images in a folder can follow this preprocess.
   
 ## 5.Training
