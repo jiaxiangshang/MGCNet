@@ -20,7 +20,8 @@ git clone --recursive https://github.com/jiaxiangshang/MGCNet.git
 cd MGCNet
 (sudo) pip install -r requirement.txt
 ```
-(1) For render loss(reconstruction loss), we use the differential renderer named tf_mesh_render(thanks!) https://github.com/google/tf_mesh_renderer. I find many issue happens here, so let's make this more clear.
+(1) For render loss(reconstruction loss), we use the differential renderer named tf_mesh_render(thanks!) https://github.com/google/tf_mesh_renderer. 
+I find many issue happens here, so let's make this more clear.
 The tf_mesh_render does not return triangle id for each pixel after rasterise, we do this by our self and add these changes as submodule to mgcnet. 
 
 (2) Then how to compile tf_mesh_render, my setting is bazel==10.1, gcc==5.*, the compile command is 
@@ -32,22 +33,27 @@ If the The gcc/g++ version is 4.* that you can try to change the compile cmd in 
 
 ## 2.Model
 1. 3dmm model + network weight
+
    We include BFM09/BFM09 expression, BFM09 face region from https://github.com/microsoft/Deep3DFaceReconstruction, BFM09 uv from https://github.com/anilbas/3DMMasSTN into a whole 3dmm model.
   https://drive.google.com/file/d/1RkTgcSGNs2VglHriDnyr6ZS5pbnZrUnV/view?usp=sharing
   Extract this file to /MGCNet/model
 2. pretain
+
    This include the pretrail model for the Resnet50 and vgg pretrain model for Facenet.
   https://drive.google.com/file/d/1jVlf05_Bm_nbIQXZRfmz-dA03xGCawBw/view?usp=sharing
   Extract this file to /MGCNet/pretain
   
 ## 3.Data
-1. data
-  https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
-  Extract this file to /MGCNet/data
-  (We can not provide all datas, as it is too large and the license of MPIE dataset http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html not allow me to do this.)
-2. data: landmark ground truth detection method from https://github.com/1adrianb/2D-and-3D-face-alignment
-   We use the SFD face detector
+1. data demo: https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
+  
+  Extract this file to /MGCNet/data, we can not provide all datas, as it is too large and the license of MPIE dataset http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html not allow me to do this.
+  
+2. data: landmark ground truth 
+
+  The detection method from https://github.com/1adrianb/2D-and-3D-face-alignment, and we use the SFD face detector
+  
 3. data: skin probability
+
   I get this part code from Yu DENG(t-yudeng@microsoft.com), maybe you can ask help from him.
 
 ## 4.Testing
