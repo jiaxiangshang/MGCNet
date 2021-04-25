@@ -10,7 +10,7 @@ This is an official python implementation of MGCNet. This is the pre-print versi
 2. image
   ![image](https://github.com/jiaxiangshang/MGCNet/blob/master/githubVisual/result_multiPose.jpg)
   
-3. Full video can be seen in [YouTube] https://www.youtube.com/watch?v=DXzkO3OwlYQ
+3. Full video can be seen in [YouTube](https://www.youtube.com/watch?v=DXzkO3OwlYQ)
   
 # Running code
 ## 1. Code + Requirement + thirdlib
@@ -20,7 +20,7 @@ git clone --recursive https://github.com/jiaxiangshang/MGCNet.git
 cd MGCNet
 (sudo) pip install -r requirement.txt
 ```
-(1) For render loss(reconstruction loss), we use the differential renderer named tf_mesh_render(thanks!) https://github.com/google/tf_mesh_renderer. 
+(1) For render loss(reconstruction loss), we use the differential renderer named [tf_mesh_render](https://github.com/google/tf_mesh_renderer).
 I find many issue happens here, so let's make this more clear.
 The tf_mesh_render does not return triangle id for each pixel after rasterise, we do this by our self and add these changes as submodule to mgcnet. 
 
@@ -34,19 +34,18 @@ If the The gcc/g++ version is 4.* that you can try to change the compile cmd in 
 ## 2.Model
 1. 3dmm model + network weight
 
-   We include BFM09/BFM09 expression, BFM09 face region from https://github.com/microsoft/Deep3DFaceReconstruction, BFM09 uv from https://github.com/anilbas/3DMMasSTN into a whole 3dmm model.
+   We include BFM09/BFM09 expression, BFM09 face region from [DengYu](https://github.com/microsoft/Deep3DFaceReconstruction), BFM09 uv from [3DMMasSTN](https://github.com/anilbas/3DMMasSTN) into a whole 3dmm model.
   https://drive.google.com/file/d/1RkTgcSGNs2VglHriDnyr6ZS5pbnZrUnV/view?usp=sharing
   Extract this file to /MGCNet/model
 2. pretain
 
-   This include the pretrail model for the Resnet50 and vgg pretrain model for Facenet.
-  https://drive.google.com/file/d/1jVlf05_Bm_nbIQXZRfmz-dA03xGCawBw/view?usp=sharing
+   This include the pretrail model for the Resnet50 and vgg pretrain model for [Facenet](https://drive.google.com/file/d/1jVlf05_Bm_nbIQXZRfmz-dA03xGCawBw/view?usp=sharing).
   Extract this file to /MGCNet/pretain
   
 ## 3.Data
 1. data demo: https://drive.google.com/file/d/1Du3iRO0GNncZsbK4K5sboSeCUv0-SnRV/view?usp=sharing
   
-   Extract this file to /MGCNet/data, we can not provide all datas, as it is too large and the license of MPIE dataset http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html not allow me to do this.
+   Extract this file to /MGCNet/data, we can not provide all datas, as it is too large and the [license of MPIE dataset](http://www.cs.cmu.edu/afs/cs/project/PIE/MultiPie/Multi-Pie/Home.html) not allow me to do this.
   
 2. data: landmark ground truth 
 
@@ -91,5 +90,6 @@ If you use this code, please consider citing:
 Please contact _jiaxiang.shang@gmail.com_ or open an issue for any questions or suggestions.
 
 ## Acknowledgements
-Thanks the help from recent 3D face reconstruction papers [Deep3DFaceReconstruction] https://github.com/microsoft/Deep3DFaceReconstruction
+Thanks the help from recent 3D face reconstruction papers [Deep3DFaceReconstruction](https://github.com/microsoft/Deep3DFaceReconstruction), [3DMMasSTN](https://github.com/anilbas/3DMMasSTN), [PRNet](https://github.com/YadiraF/PRNet), [RingNet](https://github.com/soubhiksanyal/RingNet), [3DDFA](https://github.com/cleardusk/3DDFA) and single depth estimation work [DeepMatchVO](https://github.com/hlzz/DeepMatchVO).
+I would like to thank [Tewari](https://people.mpi-inf.mpg.de/~atewari/) to provide the compared result.
   
