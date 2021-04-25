@@ -91,3 +91,5 @@ If you use this code, please consider citing:
 Please contact _jiaxiang.shang@gmail.com_ or open an issue for any questions or suggestions.
 
 ## Acknowledgements
+Thanks the help from recent 3D face reconstruction papers [Deep3DFaceReconstruction] https://github.com/microsoft/Deep3DFaceReconstruction
+  
